@@ -2,7 +2,8 @@ h1. MockAjax
 
 MockAjax is an mock XMLHttpRequest implemetation designed to allow asyncronous
 xhr requests to be run inside a synchronous testing framework. It is specifically 
-designed to run with JsHamcrest and jQuery inside JsTestDriver. 
+designed to run with JsHamcrest and jQuery or PrototypeJS and inside many different unit testing frameworks.
+Includes support for jsTestDriver, jasmine, JsUnitTest, jsUnity, QUnit, Rhino, YIUTest and screwunit 
 
 h2. So what does it do?
 
@@ -38,10 +39,29 @@ assertThat($("#doc > P").text(), equalTo("this is the body"), "body correctly ap
 
 h2. How do I use it
 
-First of all, this framework requires JsHamcrest (or something which uses hamcrest compatible matchers), so you need to be using that
-then create a file in your test environment with this command
+First of all, this framework requires JsHamcrest (or something which uses hamcrest compatible matchers), so you need to be using that.
+Right after the JsHamcrest.Integration is preformed, add this line
 
 @MockAjax.Integration.JsTestDriver().jQuery();@
+
+Integration commands can be chained and the following frameworks are supported
+
+h3. testing frameworks
+
+* jasmine
+* JsTestDriver
+* JsUnitTest
+* jsUnity
+* QUnit
+* Rhino
+* YUITest
+* screwunit
+
+h3. development frameworks
+
+* jQuery
+* Prototype
+* Zepto
 
 
 h2. I want more

@@ -150,13 +150,12 @@
 	var ma = window.MockAjax = {
 		Integration: {
 			savedGlobals: {},
-			
 			// integrates with src lib such that our MockXHR is called rather than the browser implementation
 			integrateWithSrcLib: function(cx, name) {
 				cx[name] = function() { return new MockXHR(); };
 				return this;
 			},
-			// integrates with test lib such that whenRequest are in the scope that tests are run
+			// integrates with test lib such that whenRequest, request and timeout are in the scope that tests are run
 			integrateWithTestLib: function(cx) {
 				cx.whenRequest = ma.whenRequest;
 				cx.respond = ma.respond;
@@ -182,14 +181,30 @@
 				cx.clearTimeout = this.savedGlobals.clearTimeout;
 				return this;
 			},
-			jsTestDriver: function() {
-				return this.integrateWithTestLib(window);
-			},
+			jasmine: function() { return this.integrateWithTestLib(window); },
+			JsTestDriver: function() { return this.integrateWithTestLib(window); },
+			JsUnitTest: function() { return this.integrateWithTestLib(JsUnitTest.Unit.Testcase.prototype); },
+			jsUnity: function() { return this.integrateWithTestLib(jsUnity.env.defaultScope); },
+			QUnit: function() { return this.integrateWithTestLib(window); },
+			Rhino: function() { return this.integrateWithTestLib(window); },
+			YUITest: function() { return this.integrateWithTestLib(window); },
+			screwunit: function() { return this.integrateWithTestLib(Screw.Matchers); },
+
 			jQuery: function(cx) {
 				this.stealTimers(window);
 				this.integrateWithSrcLib(( cx || jQuery || $).ajaxSettings, "xhr");
 				return this;
 			},
+			Prototype: function(cx) {
+				this.stealTimers(window); // prototypejs does not appear to handle request timeouts natively
+				this.integrateWithSrcLib( cx || Ajax, "getTransport" );
+				return this;
+			},
+			Zepto: function(cx) {
+				this.stealTimers(window);
+				cx.XMLHttpRequest = MockXHR;
+				return this;
+			}
 		},
 		whenRequest: function(req) {
 			var action = { req: req, res: {} };
