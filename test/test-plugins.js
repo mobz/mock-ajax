@@ -1,0 +1,1 @@
+JsHamcrest.Integration.JsTestDriver();

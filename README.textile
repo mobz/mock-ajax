@@ -36,6 +36,14 @@ MockAjax.respond();
 assertThat($("#doc > H2").text(), equalTo("Article Title"), "title correctly applied to article heading");
 assertThat($("#doc > P").text(), equalTo("this is the body"), "body correctly applied to article paragraph");
 
+h2. How do I use it
+
+First of all, this framework requires JsHamcrest (or something which uses hamcrest compatible matchers), so you need to be using that
+then create a file in your test environment with this command
+
+@MockAjax.Integration.JsTestDriver().jQuery();@
+
+
 h2. I want more
 
 h3. whenRequest
