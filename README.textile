@@ -1,0 +1,103 @@
+h1. MockAjax
+
+MockAjax is an mock XMLHttpRequest implemetation designed to allow asyncronous
+xhr requests to be run inside a synchronous testing framework. It is specifically 
+designed to run with JsHamcrest and jQuery inside JsTestDriver. 
+
+h2. So what does it do?
+
+* Mock out Ajax requests, so a server is not required to test server dependant code
+* Allow asyncronous requests to run synchronously, allowing tests to run much faster than normal
+* Allow you to test multiple simultaneous inflight requests
+* Allow tricky edge cases to be tested with ease
+** server timeouts
+** receiving server responses out of order
+** 404's
+** server errors
+* Allows tests that use setTimeout to run instantly and reliably
+* also supports asynchronous and synchronous ajax without blocking
+
+h2. Show me
+
+pre. // fetch an article from the server and put it in a div on the page
+// set up our expectations (you can think of this as a virtual server)
+whenRequest({ url: is("/api/article/1") })
+	.thenRespond({ type: "html", data: "<h2>Article Title</h2><p>this is the body</p>" });
+// run the code under test
+jQuery.ajax( {
+	url: "/api/article/1",
+	success: function(article) {
+		$("#doc").html(article);
+	}
+} );
+// trigger the respond from the server
+MockAjax.respond();
+// assert that the test ran correctly
+assertThat($("#doc > H2").text(), equalTo("Article Title"), "title correctly applied to article heading");
+assertThat($("#doc > P").text(), equalTo("this is the body"), "body correctly applied to article paragraph");
+
+h2. I want more
+
+h3. whenRequest
+
+Each parameter to @whenRequest@ takes a "hamcrest matcher":http://jshamcrest.destaquenet.com/modules/matchers.html . All parameters are optional
+You can create as many whenRequest / thenRespond pairs as you like
+
+* @method@ matches the request method (GET, POST, HEAD etc)
+* @url@ matches the url component
+* @data@ matches the request body (usually blank for GET requests, or contains form data) 
+* @headers@ matches the map of request headers (eg Cookie, Referer)
+* @async@ matches the async flag (either @true@ or @false@ )
+* @username@ matches the HTTP username
+* @password@ matches the HTTP password
+
+examples: 
+
+pre. whenRequest({ method: anyOf("PUT", "DELETE"), url: matches(/blog\/\d+/), username: is("admin") })
+
+h3. thenRespond
+
+Each parameter passed to @thenRespond@ constitutes some part of the response from the server
+
+* @status@ (default = 200) the "HTTP status code":http://en.wikipedia.org/wiki/List_of_HTTP_status_codes for the response
+* @data@ (default = "") the responseText or responseXML that forms the body of the response
+* @type@ (default = "json") a short cut for setting the Content-Type header (acceptable values are @json@, @html@, @text@, @script@, @xml@, @default@ )
+* @headers@ additional headers that you want to include in the response.
+Note that by default MockAjax provides some basic headers that are required to get the mock working in jQuery, any that are provided override the built in ones.
+
+By default there is one built in response that will be returned if no request matches and that is a 404 - file not found response
+
+examples: 
+
+pre. thenRespond({ type: "html", data: "<div>hello world</div>" });
+thenRespond({ data: '{"this":"is","some":["json","data"]}' });
+thenRespond({ status: 500, data: "Fatal error: Call to undefined function: mysql_set_charset() in /pages/includes/comments.php on line 152" });
+thenRespond({ status: 401, headers: { "WWW-Authenticate": "Basic realm=\"intranet\"" }, data: "401 - Unauthorized" });
+
+h2. MockAjax.respond()
+
+the @respond@ method causes MockAjax to respond with the oldest ajax response in it's queue. The respond method is not required for synchronous ajax requests.
+if there are multiple inflight requests at once, you can cause responses to return out-of-order by passing a non-zero number.
+@MockAjax.respond(3)@ causes the fourth queued response to be returned
+
+h2. MockAjax.timeout()
+
+the @timeout@ method causes any queued calls to setTimeout to be executed. All calls to setTimeout are trapped, so if you have multiple timers you will need to call timeout multiple times to clear them all.
+
+pre. // example testing the timeout feature of some code
+// fire off the ajax request
+jQuery.ajax( {
+	url: "/article/12",
+	timeout: 60000, // one minute (but we don't want wait that long for the test!)
+	success: this.doSomething,
+	error: function(x, e) { if(e === "timeout") { $("#doc").text("Error: the request timed out. Perhaps the server died"); } }
+} );
+// force the timeout
+MockAjax.timeout();
+// assert that the test ran correctly
+assertThat( $("#doc").text(), contains("timed out"), "testing request timeout handling");
+
+
+
+
+
