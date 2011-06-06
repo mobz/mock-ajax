@@ -21,7 +21,7 @@
  * see github.com/mobz/mockajax
  */
 (function() {
-	var version = "1.0";
+	var version = "1.0.1";
 
 	var defaultAction = {
 		req: { }, // always matches
@@ -218,6 +218,11 @@
 		respond: function(n) {
 			responseQueue[n || 0]._respond();
 		},
+		respondAll: function() {
+			while (responseQueue.length > 0) {
+				respond();
+			};
+		},		
 		timeout: function() {
 			for(var i = 0; i < timerQueue.length; i++) {
 				if(timerQueue[i]) {

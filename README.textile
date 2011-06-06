@@ -108,6 +108,10 @@ the @respond@ method causes MockAjax to respond with the oldest ajax response in
 if there are multiple inflight requests at once, you can cause responses to return out-of-order by passing a non-zero number.
 @MockAjax.respond(3)@ causes the fourth queued response to be returned
 
+h2. MockAjax.respondAll()
+
+the @respondAll@ method causes MockAjax to respond to all of the ajax responses in it's queue, oldest first. The respondAll method is not required for synchronous ajax requests.
+
 h2. MockAjax.timeout()
 
 the @timeout@ method causes any queued calls to setTimeout to be executed. All calls to setTimeout are trapped, so if you have multiple timers you will need to call timeout multiple times to clear them all.
