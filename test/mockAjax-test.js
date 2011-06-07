@@ -16,6 +16,9 @@ MockAjaxTest.prototype = {
 		assertThat(cx, hasFunction("xhr"), "integrateWithSrcLib fail");
 		MockAjax.Integration.integrateWithTestLib(cx);
 		assertThat(cx, hasFunction("whenRequest"), "integrateWithTestLib fail");
+		assertThat(cx, hasFunction("respond"), "respond function integrated with test lib fail");
+		assertThat(cx, hasFunction("respondAll"), "respondAll function integrated with test lib fail");
+		assertThat(cx, hasFunction("timeout"), "timeout function integrated with test lib fail");
 	},
 	testReadyStateChange: function() {
 		MockAjax.reset();

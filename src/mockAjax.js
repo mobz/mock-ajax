@@ -159,6 +159,7 @@
 			integrateWithTestLib: function(cx) {
 				cx.whenRequest = ma.whenRequest;
 				cx.respond = ma.respond;
+				cx.respondAll = ma.respondAll;
 				cx.timeout = ma.timeout;
 				return this;
 			},
@@ -200,9 +201,9 @@
 				this.integrateWithSrcLib( cx || Ajax, "getTransport" );
 				return this;
 			},
-			Zepto: function(cx) {
+			Zepto: function() {
 				this.stealTimers(window);
-				cx.XMLHttpRequest = MockXHR;
+				window.XMLHttpRequest = MockXHR;
 				return this;
 			}
 		},
