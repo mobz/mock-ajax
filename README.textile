@@ -105,6 +105,7 @@ thenRespond({ status: 401, headers: { "WWW-Authenticate": "Basic realm=\"intrane
 @data@ Can also be defined as a function, which is invoked at the point of request, to allow great flexibility in the expected response
 
 pre. thenRespond(function(settings) { return { type: "html", data: someFuncToGetData() }; });
+
 Note settings is the original request and contains the parameters used in the @whenRequest@ matchers
 
 h2. MockAjax.respond()
