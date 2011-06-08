@@ -21,7 +21,7 @@
  * see github.com/mobz/mockajax
  */
 (function() {
-	var version = "1.0.1";
+	var version = "1.0.2";
 
 	var defaultAction = {
 		req: { }, // always matches
@@ -85,6 +85,7 @@
 				
 				// allow user specified functions in place of data				
 				if (this._action.resFunction !== undefined) {
+					this._action = actionCache.getCloneOf(i);
 					// pass in the original request
 					this._action.res = this._action.resFunction(sig);
 				}											
@@ -95,6 +96,7 @@
 				}		
 
 				responseQueue.push(this);
+
 				break;
 			}
 
@@ -205,16 +207,26 @@
 			jQuery: function(cx) {
 				this.stealTimers(window);
 				this.integrateWithSrcLib(( cx || jQuery || $).ajaxSettings, "xhr");
+				actionCache.getCloneOf = function(i) {
+					// shallow copy
+					return $.extend(false, {}, this[i]);
+				}
 				return this;
 			},
 			Prototype: function(cx) {
 				this.stealTimers(window); // prototypejs does not appear to handle request timeouts natively
 				this.integrateWithSrcLib( cx || Ajax, "getTransport" );
+				actionCache.getCloneOf = function(i) {
+					return Object.clone(this[i]);
+				}				
 				return this;
 			},
 			Zepto: function(cx) {
 				this.stealTimers(window);
 				cx.XMLHttpRequest = MockXHR;
+				actionCache.getCloneOf = function(i) {
+					return $.extend({}, this[i]);
+				}
 				return this;
 			}
 		},
