@@ -210,5 +210,94 @@ MockAjaxTest.prototype = {
 		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete"), "jquery correctly generates success fail:");
 		assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
 		assertThat(cx.data.foo, is("bar"), "mockAjax correctly processes JavaScript Object response");
+	},
+	testResponseWithFunctionJSON: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		var callNum = 0;
+
+		MockAjax.whenRequest({ url: equalTo("/bar") }).thenRespond(function(settings) {
+			callNum += 1;
+			return { data: {foo: callNum} };
+		});
+
+        var i=0;
+
+        cx.reset();
+
+        for (i; i< 5; i+=1) {
+            $.ajax({ url: "/bar" });
+            MockAjax.respond();
+            assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
+            assertThat(cx.data.foo, is(i+1), "mockAjax correctly processes dynamic response");
+        }
+
+    },
+    testResponseWithFunctionWithNonDefaultType: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		var callNum = 0;
+
+		MockAjax.whenRequest({ url: equalTo("/bar/html") }).thenRespond(function(settings) {
+			callNum += 1;
+			return {
+                type : "html",
+                data: "<h1>Page number " + callNum + "</h1>"
+            };
+		});
+
+        var i=0;
+
+        cx.reset();
+
+        for (i; i< 5; i+=1) {
+            $.ajax({ url: "/bar/html" });
+            MockAjax.respond();
+            assertThat(cx.data, is("<h1>Page number " + (i+1) + "</h1>"), "mockAjax correctly processes dynamic html response");
+        }
+	},
+    testResponseWithFunctionWithNonDefaultStatus: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		MockAjax.whenRequest({ url: equalTo("/bar/internalError") }).thenRespond(function(settings) {
+			return {
+                status: 500
+            };
+		});
+
+        cx.reset();
+
+        $.ajax({ url: "/bar/internalError" });
+
+		MockAjax.respond();
+		assertThat(cx.callbacks.join("|"), equalTo("error=error,500|complete"), "jquery correctly generates error fail");
+
 	}
 };
