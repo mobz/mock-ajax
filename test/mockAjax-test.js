@@ -58,7 +58,7 @@ MockAjaxTest.prototype = {
 					lastStatus = xhr.status;
 					lastData = xhr.responseText;
 				}
-			}
+			};
 			xhr.send();
 		} };
 		MockAjax.Integration.integrateWithSrcLib(q, "xhr");
@@ -92,7 +92,7 @@ MockAjaxTest.prototype = {
 					lastStatus = xhr.status;
 					lastData = xhr.responseText;
 				}
-			}
+			};
 			xhr.send();
 		} };
 		MockAjax.Integration.integrateWithSrcLib(q, "xhr");
@@ -147,7 +147,7 @@ MockAjaxTest.prototype = {
 		assertThat(cx.callbacks.join("|"), equalTo("error=error,404|complete"), "jquery correctly generates error fail");
 
 		cx.reset();
-		$.ajax({ url: "/bar", });
+		$.ajax({ url: "/bar" });
 		MockAjax.respond();
 		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete"), "jquery correctly generates success fail:");
 		assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
@@ -184,5 +184,31 @@ MockAjaxTest.prototype = {
 	},
 	testReverseIntegration: function() {
 		MockAjax.Integration.returnTimers(window);
+	},
+	testJSObjectResponse: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+		
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); }, 
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+		
+		MockAjax.whenRequest({ url: equalTo("/bar") }).thenRespond({ data: {foo:"bar"} });
+
+		cx.reset();
+		$.ajax({ url: "/foo" });
+		MockAjax.respond();
+		assertThat(cx.callbacks.join("|"), equalTo("error=error,404|complete"), "jquery correctly generates error fail");
+
+		cx.reset();
+		$.ajax({ url: "/bar" });
+		MockAjax.respond();
+		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete"), "jquery correctly generates success fail:");
+		assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
+		assertThat(cx.data.foo, is("bar"), "mockAjax correctly processes JavaScript Object response");
 	}
 };
