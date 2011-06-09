@@ -102,9 +102,18 @@ thenRespond({ data: '{"this":"is","some":["json","data"]}' });
 thenRespond({ status: 500, data: "Fatal error: Call to undefined function: mysql_set_charset() in /pages/includes/comments.php on line 152" });
 thenRespond({ status: 401, headers: { "WWW-Authenticate": "Basic realm=\"intranet\"" }, data: "401 - Unauthorized" });
 
+h4. Dynamic responses 
 @data@ Can also be defined as a function, which is invoked at the point of request, to allow great flexibility in the expected response
 
-pre. thenRespond(function(settings) { return { type: "html", data: someFuncToGetData() }; });
+pre. thenRespond(function(settings) {
+            return {
+                type: "json",
+                data: {
+                    callTime: new Date(),
+                    requestUrl : settings.url
+                }
+            };
+		});
 
 Note settings is the original request and contains the parameters used in the @whenRequest@ matchers
 
