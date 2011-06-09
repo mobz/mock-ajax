@@ -252,6 +252,35 @@ MockAjaxTest.prototype = {
 		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete|error=error,500|complete|success=200|complete"), "mixing dynamic and static results");
 		assertThat(cx.data, is("GET|/j/k/l"), "data from final dynamic result in cx");
 	},
+	testResponseWithFunctionJSON: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		var callNum = 0;
+
+		MockAjax.whenRequest({ url: equalTo("/bar") }).thenRespond(function(settings) {
+			callNum += 1;
+			return { data: {foo: callNum} };
+		});
+
+		var i=0;
+		cx.reset();
+
+		for (i; i< 5; i+=1) {
+			$.ajax({ url: "/bar" });
+			MockAjax.respond();
+			assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
+			assertThat(cx.data.foo, is(i+1), "mockAjax correctly processes dynamic response");
+		}
+	},
 	testResponseWithFunctionWithNonDefaultType: function() {
 		MockAjax.reset();
 		MockAjax.Integration.jQuery($);

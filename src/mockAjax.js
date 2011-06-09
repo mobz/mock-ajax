@@ -87,9 +87,9 @@
 				this._response = (typeof this._action.res === 'function') ? this._action.res(sig, this) : this._action.res;
 
 				// serialise objects if needed			
-				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
+				if ((this._response.type === undefined || this._response.type === "json") && typeof this._response.data !== "string" ) {
 					if (JSON && JSON.stringify) {
-						this._action.res.data = JSON.stringify(this._action.res.data);
+						this._response.data = JSON.stringify(this._response.data);
 					} else {
 						throw "JSON required for in-line serialisation, but not available";
 					}
