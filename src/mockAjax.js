@@ -82,6 +82,12 @@
 					}
 				}
 				this._action = actionCache[i];
+				
+				// serialise objects if needed			
+				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
+					this._action.res.data = JSON.stringify(this._action.res.data);
+				}												
+				
 				responseQueue.push(this);
 				break;
 			}
