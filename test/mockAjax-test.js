@@ -226,7 +226,7 @@ MockAjaxTest.prototype = {
 			complete: function(x) { this.callbacks.push("complete"); }
 		});
 
-		MockAjax.whenRequest({ method: is("GET") })	// matches all requests
+		MockAjax.whenRequest({ method: is("GET") })
 			.thenRespond( function( request ) {
 				return {
 					status: 200,
@@ -251,5 +251,60 @@ MockAjaxTest.prototype = {
 		MockAjax.respondAll();
 		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete|error=error,500|complete|success=200|complete"), "mixing dynamic and static results");
 		assertThat(cx.data, is("GET|/j/k/l"), "data from final dynamic result in cx");
+	},
+	testResponseWithFunctionWithNonDefaultType: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		var callNum = 0;
+
+		MockAjax.whenRequest({ url: equalTo("/bar/html") }).thenRespond(function(settings) {
+			callNum += 1;
+			return {
+				type : "html",
+				data: "<h1>Page number " + callNum + "</h1>"
+			};
+		});
+
+		var i=0;
+		cx.reset();
+
+		for (i; i< 5; i+=1) {
+			$.ajax({ url: "/bar/html" });
+			MockAjax.respond();
+			assertThat(cx.data, is("<h1>Page number " + (i+1) + "</h1>"), "mockAjax correctly processes dynamic html response");
+		}
+	},
+	testResponseWithFunctionWithNonDefaultStatus: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($);
+
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); },
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		MockAjax.whenRequest({ url: equalTo("/bar/internalError") }).thenRespond(function(settings) {
+			return {
+				status: 500
+			};
+		});
+
+		cx.reset();
+		$.ajax({ url: "/bar/internalError" });
+
+		MockAjax.respond();
+		assertThat(cx.callbacks.join("|"), equalTo("error=error,500|complete"), "jquery correctly generates error fail");
 	}
 };

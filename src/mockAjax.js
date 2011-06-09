@@ -31,6 +31,39 @@
 	var actionCache,	// maps requests to responses
 		responseQueue,	// array of responses awaiting delivery 
 		timerQueue;		// array of timers waiting to respond
+		
+	// create a clone of an object
+	// uses $.extend (JQuery / Zepto) or Object.clone (Prototype) if avail
+	// falls back to basic implementation if not defined
+	var createClone = function(src) {
+
+        if (typeof Object.clone === "function") {
+			return Object.clone(src);
+		}
+
+		if (typeof $.extend === "function") {
+			return $.extend((src instanceof Array) ? [] : {}, src);
+		}
+
+        // fall through to basic implementation if no framework support
+        if (src instanceof Array) {
+            return src.slice();
+        }
+
+        if (typeof src !== "object") {
+            return src;
+        }
+
+        var target = {};
+        var attr;
+
+        for (attr in src) {
+            if (src.hasOwnProperty(attr)) {
+                target[attr] = src[attr];
+            }
+        }
+		return target;
+	};
 
 	function MockXHR() {	// Mock XMLHttpRequest constructor
 		this._action;	 			// the matching record in the actionCache
@@ -86,12 +119,17 @@
 
 				this._response = (typeof this._action.res === 'function') ? this._action.res(sig, this) : this._action.res;
 
-				// serialise objects if needed
-				if ((this._response.type === undefined || this._response.type === "json") && typeof this._response.data !== "string" ) {
-					this._response.data = JSON.stringify(this._response.data);
-				}
-				
+				// serialise objects if needed			
+				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
+					if (JSON && JSON.stringify) {
+						this._action.res.data = JSON.stringify(this._action.res.data);
+					} else {
+						throw "JSON required for in-line serialisation, but not available";
+					}
+				}		
+
 				responseQueue.push(this);
+
 				break;
 			}
 
