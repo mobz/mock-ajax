@@ -31,6 +31,39 @@
 	var actionCache,	// maps requests to responses
 		responseQueue,	// array of responses awaiting delivery 
 		timerQueue;		// array of timers waiting to respond
+		
+	// create a clone of an object
+	// uses $.extend (JQuery / Zepto) or Object.clone (Prototype) if avail
+	// falls back to basic implementation if not defined
+	var createClone = function(src) {
+
+        if (typeof Object.clone === "function") {
+			return Object.clone(src);
+		}
+
+		if (typeof $.extend === "function") {
+			return $.extend((src instanceof Array) ? [] : {}, src);
+		}
+
+        // fall through to basic implementation if no framework support
+        if (src instanceof Array) {
+            return src.slice();
+        }
+
+        if (typeof src !== "object") {
+            return src;
+        }
+
+        var target = {};
+        var attr;
+
+        for (attr in src) {
+            if (src.hasOwnProperty(attr)) {
+                target[attr] = src[attr];
+            }
+        }
+		return target;
+	};
 
 	function MockXHR() {	// Mock XMLHttpRequest constructor
 		this._action;	 			// the matching record in the actionCache
@@ -81,14 +114,20 @@
 						}
 					}
 				}
-				this._action = actionCache[i];
-				
+			
 				// allow user specified functions in place of data				
-				if (this._action.resFunction !== undefined) {
-					this._action = actionCache.getCloneOf(i);
+				if (typeof actionCache[i].res === "function") {
+				
+					// create a new Action object, so that the cached action does not get modified
+					// this then allows multiple calls that match the same matcher, with differing results
+					// to be outstanding concurrently
+					this._action = createClone(actionCache[i]);
+				
 					// pass in the original request
-					this._action.res = this._action.resFunction(sig);
-				}											
+					this._action.res = this._action.res.call(null, sig);
+				} else {
+					this._action = actionCache[i];				
+				}
 				
 				// serialise objects if needed			
 				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
@@ -211,26 +250,16 @@
 			jQuery: function(cx) {
 				this.stealTimers(window);
 				this.integrateWithSrcLib(( cx || jQuery || $).ajaxSettings, "xhr");
-				actionCache.getCloneOf = function(i) {
-					// shallow copy
-					return $.extend(false, {}, this[i]);
-				}
 				return this;
 			},
 			Prototype: function(cx) {
 				this.stealTimers(window); // prototypejs does not appear to handle request timeouts natively
 				this.integrateWithSrcLib( cx || Ajax, "getTransport" );
-				actionCache.getCloneOf = function(i) {
-					return Object.clone(this[i]);
-				}				
 				return this;
 			},
 			Zepto: function(cx) {
 				this.stealTimers(window);
 				cx.XMLHttpRequest = MockXHR;
-				actionCache.getCloneOf = function(i) {
-					return $.extend({}, this[i]);
-				}
 				return this;
 			}
 		},
@@ -239,11 +268,7 @@
 			actionCache.push(action);
 			return {
 				thenRespond: function(res) {
-					if (typeof res === "function") {
-						action.resFunction = res;
-					} else {
-						action.res = res;
-					}
+					action.res = res;
 				}
 			};
 		},
