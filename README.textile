@@ -102,6 +102,23 @@ thenRespond({ data: '{"this":"is","some":["json","data"]}' });
 thenRespond({ status: 500, data: "Fatal error: Call to undefined function: mysql_set_charset() in /pages/includes/comments.php on line 152" });
 thenRespond({ status: 401, headers: { "WWW-Authenticate": "Basic realm=\"intranet\"" }, data: "401 - Unauthorized" });
 
+h3. Dynamic Responses
+
+Rather than specifying the responses for each request statically, you can define a callback function which returns an object containing any response parameters. The callback is provided with the original request.
+
+* @function callback(request, mockXHRObject) { return { [status | data | type | headers ] }; }@
+
+examples:
+
+pre.  // echo the request method and url back as the response
+thenRespond( function( req ) { return { type: "text", data: ( req.method + req.url ) } } );
+
+pre. // modify the body based on the url parameter
+thenRespond( function (req) { return { type: "text", data: "hello " + req.url.match(/?name=(\w+)/ ) } } );
+
+pre. // set the last modified header to right now
+thenRespond( function (req) { return { headers: { "Last-Modified" : (new Date()).toUTCString() } } } );
+
 h2. MockAjax.respond()
 
 the @respond@ method causes MockAjax to respond with the oldest ajax response in it's queue. The respond method is not required for synchronous ajax requests.

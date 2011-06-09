@@ -21,7 +21,7 @@
  * see github.com/mobz/mockajax
  */
 (function() {
-	var version = "1.0.1";
+	var version = "1.1";
 
 	var defaultAction = {
 		req: { }, // always matches
@@ -50,7 +50,7 @@
 			}
 		},
 		_respond: function() {
-			var res = this._action.res;
+			var res = this._response;
 			this.status = res.status || 200;
 			this.responseXML = res.data || null;
 			this.responseText = res.data || "";
@@ -81,12 +81,15 @@
 						}
 					}
 				}
+
 				this._action = actionCache[i];
-				
-				// serialise objects if needed			
-				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
-					this._action.res.data = JSON.stringify(this._action.res.data);
-				}												
+
+				this._response = (typeof this._action.res === 'function') ? this._action.res(sig, this) : this._action.res;
+
+				// serialise objects if needed
+				if ((this._response.type === undefined || this._response.type === "json") && typeof this._response.data !== "string" ) {
+					this._response.data = JSON.stringify(this._response.data);
+				}
 				
 				responseQueue.push(this);
 				break;
@@ -114,7 +117,7 @@
 		},
 		getAllResponseHeaders: function() {
 			var self = this,
-				resHeaders = this._action.res.headers || {},
+				resHeaders = this._response.headers || {},
 				cannedHeaders = "last-modified,server,content-length,content-type".split(","),
 				headers = [],
 				pushHeader = function(h) { headers.push(h + ": " + self.getResponseHeader(h)); };
@@ -129,7 +132,7 @@
 			return headers.join("\n\r");
 		},
 		getResponseHeader: function(header) {
-			var res = this._action.res;
+			var res = this._response;
 			if(res.headers && res.headers[header]) {
 				return res.headers[header];
 			}
@@ -227,7 +230,7 @@
 		},
 		respondAll: function() {
 			while (responseQueue.length > 0) {
-				respond();
+				this.respond();
 			};
 		},		
 		timeout: function() {

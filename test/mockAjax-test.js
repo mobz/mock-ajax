@@ -213,5 +213,43 @@ MockAjaxTest.prototype = {
 		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete"), "jquery correctly generates success fail:");
 		assertThat(cx.data, hasMember("foo"), "jquery correctly processes json response");
 		assertThat(cx.data.foo, is("bar"), "mockAjax correctly processes JavaScript Object response");
+	},
+	testDynamicResponses: function() {
+		MockAjax.reset();
+		MockAjax.Integration.jQuery($) 
+		
+		var cx = { reset: function() { this.data = null; this.callbacks = []; } };
+		$.ajaxSetup({
+			context: cx,
+			success: function(d,s,x) { this.data = d; this.callbacks.push("success="+x.status); }, 
+			error: function(x,e) { this.callbacks.push("error="+e+","+x.status); },
+			complete: function(x) { this.callbacks.push("complete"); }
+		});
+
+		MockAjax.whenRequest({ method: is("GET") })	// matches all requests
+			.thenRespond( function( request ) {
+				return {
+					status: 200,
+					type: "text",
+					data: [ request.method, request.url ].join( "|" )
+				};
+			});
+		MockAjax.whenRequest({ method: is("POST") })
+			.thenRespond({ status: 500, type: "text", data: "it's an error!"});
+
+		$.ajax({ type: "GET", url: "/a/b/c" });
+		$.ajax({ type: "GET", url: "/d/e/f" });
+		$.ajax({ type: "POST", url: "/g/h/i" });
+		$.ajax({ type: "GET", url: "/j/k/l" });		// set up 4 inflight requests, 3 with the same dynamic result
+		
+		cx.reset();
+		MockAjax.respond(1);
+		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete"), "default values picked up from function response");
+		assertThat(cx.data, is("GET|/d/e/f"), "second response succeeded with correct data");
+		
+		cx.reset();
+		MockAjax.respondAll();
+		assertThat(cx.callbacks.join("|"), equalTo("success=200|complete|error=error,500|complete|success=200|complete"), "mixing dynamic and static results");
+		assertThat(cx.data, is("GET|/j/k/l"), "data from final dynamic result in cx");
 	}
 };
