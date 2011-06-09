@@ -89,10 +89,14 @@
 					// pass in the original request
 					this._action.res = this._action.resFunction(sig);
 				}											
-			
+				
 				// serialise objects if needed			
 				if ((this._action.res.type === undefined || this._action.res.type === "json") && typeof this._action.res.data !== "string" ) {
-					this._action.res.data = JSON.stringify(this._action.res.data);
+					if (JSON && JSON.stringify) {
+						this._action.res.data = JSON.stringify(this._action.res.data);
+					} else {
+						throw "JSON required for in-line serialisation, but not available";
+					}
 				}		
 
 				responseQueue.push(this);
