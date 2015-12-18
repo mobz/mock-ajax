@@ -18,10 +18,10 @@
  * both whenRequest and respondWith contain many options which support common tests simply
  * while allowing you to simulate quite complex server interaction
  *
- * see github.com/mobz/mockajax
+ * see github.com/mobz/mock-ajax
  */
 (function() {
-	var version = "1.1";
+	var version = "1.2";
 
 	var defaultAction = {
 		req: { }, // always matches
@@ -61,6 +61,9 @@
 			this.readyState = state;
 			if(this.onreadystatechange) {
 				this.onreadystatechange.call(null);
+			}
+			if( state === 4 && this.onload ) {
+				this.onload.call(null);
 			}
 		},
 		open: function(pmethod, purl, pasync, pusername, ppassword) {
